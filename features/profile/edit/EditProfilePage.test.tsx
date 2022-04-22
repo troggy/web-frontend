@@ -34,9 +34,7 @@ const updateProfileMock = service.user.updateProfile as jest.MockedFunction<
   typeof service.user.updateProfile
 >;
 
-const renderPage = () => {
-  render(<EditProfilePage />, { wrapper });
-};
+const renderPage = () => render(<EditProfilePage />, { wrapper });
 
 describe("Edit profile", () => {
   beforeEach(() => {
@@ -81,19 +79,8 @@ describe("Edit profile", () => {
       })
     );
   });
-
-   it.only('should persist form state in sessionStorage', async () => {
-      renderPage();
-      await waitForElementToBeRemoved(screen.getByRole("progressbar"));
   
-      userEvent.clear(screen.getByLabelText("Who I am"));
-      userEvent.type(screen.getByLabelText("Who I am"), "I don't know yet");
-
-      const persisted = JSON.parse(sessionStorage.getItem("profile") ?? "{}")
-      expect(persisted.aboutMe).toEqual("I don't know yet");
-    })
-  
-    it.only('should populate form state from sessionStorage', async () => {
+    it('should populate form state from sessionStorage', async () => {
       sessionStorage.setItem('profile', JSON.stringify({ aboutMe: "I don't know yet" }));
       renderPage();
       await waitForElementToBeRemoved(screen.getByRole("progressbar"));
@@ -101,13 +88,29 @@ describe("Edit profile", () => {
       expect(await screen.getByDisplayValue("I don't know yet")).toBeVisible();
     })
   
-    it.only('should clear form state from sessionStorage', async () => {
+    it('should clear form state from sessionStorage on submit', async () => {
       sessionStorage.setItem('profile', JSON.stringify({ aboutMe: "I don't know yet" }));
       renderPage();
       await waitForElementToBeRemoved(screen.getByRole("progressbar"));
-  
+
       userEvent.click(screen.getByRole("button", { name: t("global:save") }));
-  
+
+      await waitFor(() =>
+        expect(mockRouter.pathname).toBe(routeToProfile("about"))
+      );
       await waitFor(() => expect(sessionStorage.getItem("profile")).toBeNull())
+    })
+
+    it('should persist form state in sessionStorage on unmount', async () => {
+      const { unmount } = renderPage();
+      await waitForElementToBeRemoved(screen.getByRole("progressbar"));
+  
+      userEvent.clear(screen.getByLabelText("Who I am"));
+      userEvent.type(screen.getByLabelText("Who I am"), "I don't know yet");
+
+      unmount();
+
+      const persisted = JSON.parse(sessionStorage.getItem("profile") ?? "{}")
+      expect(persisted.aboutMe).toEqual("I don't know yet");
     })
 });

@@ -70,8 +70,17 @@ export default function useUsers(
 
 export function useUser(id: number | undefined, invalidate = false) {
   const result = useUsers([id], invalidate);
+
+  const draftState = JSON.parse(window.sessionStorage.getItem('profile') || "{}")
+
+  const data = result.data
+    ? {
+    ...result.data.get(id),
+    ...draftState
+  } : undefined
+
   return {
-    data: result.data?.get(id),
+    data,
     error: result.errors.join("\n"),
     isError: result.isError,
     isFetching: result.isFetching,

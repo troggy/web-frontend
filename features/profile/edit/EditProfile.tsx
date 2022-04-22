@@ -74,7 +74,7 @@ export default function EditProfileForm() {
     null
   );
   const queryClient = useQueryClient();
-  const { control, errors, register, handleSubmit, setValue } =
+  const { control, errors, register, handleSubmit, setValue, formState, getValues } =
     useForm<FormValues>({
       defaultValues: {
         city: user?.city,
@@ -104,6 +104,17 @@ export default function EditProfileForm() {
     register("lng");
     register("radius");
   }, [register]);
+
+  // persist form to sessionStorage when user leaves the page
+  useEffect(() => {
+   const persistToSessionStorage = () => {
+     if (formState.isDirty && !formState.isSubmitting && !formState.isSubmitted) {
+      const draft = JSON.stringify(getValues())
+      window.sessionStorage.setItem('profile', draft) 
+     }
+   }
+   return persistToSessionStorage
+  }, [formState, getValues])
 
   const { regions, regionsLookup } = useRegions();
   const { languages, languagesLookup } = useLanguages();
@@ -141,6 +152,9 @@ export default function EditProfileForm() {
           onError: () => {
             window.scroll({ top: 0, behavior: "smooth" });
           },
+          onSuccess: () => {
+            window.sessionStorage.removeItem('profile')
+          }
         }
       );
     },
